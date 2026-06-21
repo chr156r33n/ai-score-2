@@ -14,11 +14,12 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | 2 | Eligibility benchmark | **Peer-derived corpus** — for each target URL, aggregate facts from comparison URLs; measure target coverage against that corpus (not external PAA/AlsoAsked as the primary corpus in V1). |
 | 3 | Comparison set | **Top 10 organic SERP URLs** for a keyword, via **DataForSEO** (may change later). |
 | 4 | SERP keyword source | **`data/urls_keywords.csv`** — explicit `url` + `primary_keyword` (and optional `secondary_keyword`). Derived from CMM; see below. |
+| 5 | SERP locale | **`region`** (ISO 3166-1 alpha-2), **`language`** (BCP-47), **`device`** per row. Run defaults: missing values → `US`, `en`, `mobile`. CMM export infers **region from URL property slug**; **language `en`**; **device `mobile`** for all rows. |
 
 ### Eligibility flow (per target URL)
 
-1. Read `primary_keyword` for the target URL from input file.
-2. Fetch top 10 organic results from DataForSEO for that keyword (SERP params TBD).
+1. Read `primary_keyword`, `region`, `language`, and `device` for the target URL from input file (defaults: `US`, `en`, `mobile`).
+2. Fetch top 10 organic results from DataForSEO for that keyword and locale.
 3. Extract facts from those 10 URLs → **benchmark corpus** (union across peers).
 4. Extract facts from **target URL**.
 5. Coverage analysis → eligibility score / gaps (details TBD).
@@ -34,12 +35,16 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | `url` | Yes | Target page to score (must match crawl URLs). |
 | `primary_keyword` | Yes for eligibility/SERP | Keyword passed to DataForSEO for top-10 organic URLs. |
 | `secondary_keyword` | No | Reserved for future use (e.g. second SERP set or enrichment). **V1 SERP uses `primary_keyword` only.** |
+| `region` | Yes (may be inferred) | SERP location as **ISO 3166-1 alpha-2** country/territory code (e.g. `US`, `AE`, `GB`). Mapped to DataForSEO `location_name` / `location_code` at runtime. |
+| `language` | Yes | SERP language, **BCP-47** (e.g. `en`). |
+| `device` | Yes | SERP device: `mobile` or `desktop`. **V1 default: `mobile`.** |
 
 **Rules:**
 
 - One row per target URL.
 - If `primary_keyword` is empty, the URL may still receive interpretability / attention / credibility scores, but **eligibility and full opportunity** require a keyword (TBD: skip vs fail run).
 - When the CMM has multiple target keywords in one cell (`"kw a, kw b"`), export keeps the **first** comma-separated value as `primary_keyword`.
+- **Region inference (CMM export):** first URL path segment (e.g. `abudhabi` from `/abudhabi/...`) → property country via `scripts/property_regions.py`. Unknown slugs → `US`.
 
 **Regenerate from CMM:**
 
@@ -53,7 +58,6 @@ python3 scripts/export_urls_keywords.py \
 
 ## Open (not yet decided)
 
-- DataForSEO locale: location, language, device
 - Whether target URL is excluded from peer set if it ranks in top 10
 - Fact schema, coverage math, opportunity formula wiring
 - AI attention and credibility data sources for V1

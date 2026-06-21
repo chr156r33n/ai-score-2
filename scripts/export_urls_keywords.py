@@ -5,7 +5,18 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from property_regions import (  # noqa: E402
+    DEFAULT_DEVICE,
+    DEFAULT_LANGUAGE,
+    REGION_BY_SLUG,
+    region_for_url,
+    url_slug,
+)
 
 
 def _field(row: dict[str, str | None], name: str) -> str:
@@ -22,13 +33,26 @@ def _first_primary_keyword(raw: str) -> str:
     return raw.split(",")[0].strip()
 
 
-def export(source: Path, dest: Path) -> tuple[int, int]:
+FIELDNAMES = [
+    "url",
+    "primary_keyword",
+    "secondary_keyword",
+    "region",
+    "language",
+    "device",
+]
+
+
+def export(source: Path, dest: Path) -> tuple[int, int, list[str]]:
     with source.open(newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
 
     out_rows: list[dict[str, str]] = []
     with_primary = 0
+    unknown_slugs: list[str] = []
+    seen_slugs: set[str] = set()
+
     for row in rows:
         url = _field(row, "Page URL")
         if not url:
@@ -38,11 +62,20 @@ def export(source: Path, dest: Path) -> tuple[int, int]:
         secondary = _field(row, "Secondary Keyword")
         if primary:
             with_primary += 1
+
+        slug = url_slug(url)
+        if slug and slug not in REGION_BY_SLUG and slug not in seen_slugs:
+            unknown_slugs.append(slug)
+            seen_slugs.add(slug)
+
         out_rows.append(
             {
                 "url": url,
                 "primary_keyword": primary,
                 "secondary_keyword": secondary,
+                "region": region_for_url(url),
+                "language": DEFAULT_LANGUAGE,
+                "device": DEFAULT_DEVICE,
             }
         )
 
@@ -50,13 +83,13 @@ def export(source: Path, dest: Path) -> tuple[int, int]:
     with dest.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["url", "primary_keyword", "secondary_keyword"],
+            fieldnames=FIELDNAMES,
             lineterminator="\n",
         )
         writer.writeheader()
         writer.writerows(out_rows)
 
-    return len(out_rows), with_primary
+    return len(out_rows), with_primary, unknown_slugs
 
 
 def main() -> None:
@@ -74,7 +107,13 @@ def main() -> None:
         help="Simplified output path",
     )
     args = parser.parse_args()
-    total, with_primary = export(args.source, args.dest)
+    total, with_primary, unknown_slugs = export(args.source, args.dest)
+    if unknown_slugs:
+        print(
+            "Warning: unknown URL slugs (defaulted region to US):",
+            ", ".join(sorted(unknown_slugs)),
+            file=sys.stderr,
+        )
     print(f"Wrote {total} rows ({with_primary} with primary_keyword) to {args.dest}")
 
 
