@@ -15,16 +15,18 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | 3 | Comparison set | **Top 10 organic SERP URLs** for a keyword, via **DataForSEO** (may change later). |
 | 4 | SERP keyword source | **`data/urls_keywords.csv`** — explicit `url` + `primary_keyword` (and optional `secondary_keyword`). Derived from CMM; see below. |
 | 5 | SERP locale | **`region`** (ISO 3166-1 alpha-2), **`language`** (BCP-47), **`device`** per row. Run defaults: missing values → `US`, `en`, `mobile`. CMM export infers **region from URL property slug**; **language `en`**; **device `mobile`** for all rows. |
+| 6 | Target in SERP top 10 | **Exclude target, no backfill** — If the target URL appears in the top 10 organic results, remove it from the peer set. Do **not** fetch position 11+ to refill. The benchmark corpus may contain **fewer than 10** URLs. |
 
 ### Eligibility flow (per target URL)
 
 1. Read `primary_keyword`, `region`, `language`, and `device` for the target URL from input file (defaults: `US`, `en`, `mobile`).
 2. Fetch top 10 organic results from DataForSEO for that keyword and locale.
-3. Extract facts from those 10 URLs → **benchmark corpus** (union across peers).
-4. Extract facts from **target URL**.
-5. Coverage analysis → eligibility score / gaps (details TBD).
+3. **Remove the target URL** from that list if present. **Do not backfill** with additional SERP positions. Use the remaining URLs as peers (0–10).
+4. Extract facts from peer URLs → **benchmark corpus** (union across peers).
+5. Extract facts from **target URL**.
+6. Coverage analysis → eligibility score / gaps (details TBD).
 
-**Note:** Corpus is built from SERP peers only, not from merging target into the corpus unless we decide otherwise (TBD).
+**Note:** Corpus is built from SERP peers only (never the target).
 
 ## Run input: URL / keywords
 
