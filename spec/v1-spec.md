@@ -20,6 +20,7 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | 6 | Target in SERP top 10 | **Exclude target, no backfill** — If the target URL appears in the top 10 organic results, remove it from the peer set. Do **not** fetch position 11+ to refill. The benchmark corpus may contain **fewer than 10** URLs. |
 | 7 | Sparse / failed peer set | **Always emit an eligibility score** when the pipeline runs, including 0 peers or failed crawls. Pair the score with explicit **quality caveats** (see below) so consumers know when to trust it. |
 | 8 | Interpretability | **Separate module**, spec **on hold** — Screaming Frog / rules deferred. Pipeline must not depend on it for other modules to run. See [Architecture](#architecture-modules). |
+| 9 | Fact inventory | **Corpus-defined** — The facts eligibility uses are **those in the benchmark corpus** (aggregated from SERP peers). No separate global taxonomy or external question list defines the fact set in V1. The target is scored on **coverage of corpus facts** only. |
 
 ### Eligibility flow (per target URL)
 

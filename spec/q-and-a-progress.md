@@ -20,6 +20,7 @@
 | 6 | If target in top 10: **exclude, no backfill** (0–9 peers). |
 | 7 | **Always score eligibility**; use **`eligibility_caveats`** (`no_peers`, `too_few_peers`, `corpus_too_thin`, `peer_not_accessible`, `target_not_accessible`, `serp_incomplete`). |
 | 8 | **Interpretability = separate module, on hold** — defer SF/export/rules; pipeline runs without it. |
+| 9 | **Facts = benchmark corpus only** — peer-derived fact list; target scored on coverage of that list, not an external taxonomy. |
 
 ---
 
