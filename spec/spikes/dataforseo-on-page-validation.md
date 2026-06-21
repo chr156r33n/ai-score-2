@@ -56,10 +56,14 @@ Record keyword, region, language, device for each SERP call.
 
 | Name | Value |
 |------|--------|
-| `DATAFORSEO_LOGIN` | API login |
-| `DATAFORSEO_PASSWORD` | API password |
+| `DATAFORSEO_LOGIN` | API login (preferred) |
+| `DATAFORSEO_PASSWORD` | API password (preferred) |
+| `dataforseo_user` | Alias for login (supported by `scripts/dataforseo_client.py`) |
+| `dataforseo_pass` | Alias for password (supported by `scripts/dataforseo_client.py`) |
 
-Names must match exactly. After adding secrets, **start a new Cloud Agent run** so they are injected (they may not appear in `printenv`).
+Names must match exactly for the preferred pair. After adding secrets, **start a new Cloud Agent run** so they are injected (they may not appear in `printenv`).
+
+**Run log:** see [dataforseo-run-log.md](./dataforseo-run-log.md) (2025-06-21 Cloud Agent run blocked on TLS to DataForSEO).
 
 ```bash
 python3 scripts/check_dataforseo_credentials.py

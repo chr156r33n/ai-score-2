@@ -14,10 +14,12 @@ _LOGIN_KEYS = (
     "DATAFORSEO_LOGIN",
     "DATAFORSEO_USERNAME",
     "DATAFORSEO_API_LOGIN",
+    "dataforseo_user",
 )
 _PASSWORD_KEYS = (
     "DATAFORSEO_PASSWORD",
     "DATAFORSEO_API_PASSWORD",
+    "dataforseo_pass",
 )
 
 
@@ -44,8 +46,9 @@ def auth_header() -> str:
     login, password = load_credentials()
     if not login or not password:
         raise RuntimeError(
-            "DataForSEO credentials missing. Set Cloud Agent secrets "
-            "DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD (Runtime Secret)."
+            "DataForSEO credentials missing. Set Runtime Secrets "
+            "DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD, or dataforseo_user "
+            "and dataforseo_pass."
         )
     token = base64.b64encode(f"{login}:{password}".encode()).decode()
     return f"Basic {token}"
