@@ -16,6 +16,7 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | 4 | SERP keyword source | **`data/urls_keywords.csv`** — explicit `url` + `primary_keyword` (and optional `secondary_keyword`). Derived from CMM; see below. |
 | 5 | SERP locale | **`region`** (ISO 3166-1 alpha-2), **`language`** (BCP-47), **`device`** per row. Run defaults: missing values → `US`, `en`, `mobile`. CMM export infers **region from URL property slug**; **language `en`**; **device `mobile`** for all rows. |
 | 6 | Target in SERP top 10 | **Exclude target, no backfill** — If the target URL appears in the top 10 organic results, remove it from the peer set. Do **not** fetch position 11+ to refill. The benchmark corpus may contain **fewer than 10** URLs. |
+| 7 | Sparse / failed peer set | **Always emit an eligibility score** when the pipeline runs, including 0 peers or failed crawls. Pair the score with explicit **quality caveats** (see below) so consumers know when to trust it. |
 
 ### Eligibility flow (per target URL)
 
@@ -27,6 +28,48 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 6. Coverage analysis → eligibility score / gaps (details TBD).
 
 **Note:** Corpus is built from SERP peers only (never the target).
+
+### Eligibility scoring when data is weak
+
+- **Always compute and output `eligibility_score`** (0–100) for each URL that enters the eligibility step, even when peers or crawls are weak. Do not drop the URL solely for sparse peers.
+- **Edge case — empty benchmark:** If there are **no usable peer pages** or **zero benchmark facts** after extraction, set `eligibility_score` to **0** and add caveats explaining why (not a null score).
+- **Edge case — target not crawlable:** If the target cannot be fetched/parsed, set `eligibility_score` to **0** and add `target_not_accessible` (interpretability may also flag the same URL).
+
+### Eligibility data quality fields (per URL)
+
+Every eligibility result includes counts plus a machine-readable caveat list.
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `peer_count_serp` | int | Organic results returned (up to 10). |
+| `peer_count_excluded_target` | int | Peers after removing the target URL. |
+| `peer_count_crawled` | int | Peers successfully fetched and parsed for fact extraction. |
+| `benchmark_fact_count` | int | Facts in the aggregated peer corpus after dedup. |
+| `eligibility_caveats` | array | Zero or more caveat objects (below). |
+
+**Caveat object:**
+
+```json
+{
+  "code": "too_few_peers",
+  "message": "Human-readable explanation for reports",
+  "context": { "peer_count_excluded_target": 2, "threshold": 3 }
+}
+```
+
+**V1 caveat codes** (extend as needed):
+
+| Code | When |
+|------|------|
+| `no_peers` | `peer_count_excluded_target` is 0 after SERP + exclusion. |
+| `too_few_peers` | `peer_count_excluded_target` (or `peer_count_crawled`) is below configured minimum (default **3**, TBD in config). |
+| `corpus_too_thin` | `benchmark_fact_count` below configured minimum (default TBD). |
+| `peer_not_accessible` | One or more peer URLs failed fetch/render/extract; `context.failed_peer_urls` lists them. |
+| `target_not_accessible` | Target URL failed fetch/render/extract. |
+| `serp_incomplete` | Fewer than 10 results returned from DataForSEO for the query. |
+
+Caveats are **non-blocking**: they explain reliability; they do not suppress the score.
+
 
 ## Run input: URL / keywords
 
@@ -60,7 +103,7 @@ python3 scripts/export_urls_keywords.py \
 
 ## Open (not yet decided)
 
-- Whether target URL is excluded from peer set if it ranks in top 10
+- Minimum peer count (e.g. score eligibility when 0 peers after exclusion?)
 - Fact schema, coverage math, opportunity formula wiring
 - AI attention and credibility data sources for V1
 - Deliverable shape (CLI, outputs on disk)
