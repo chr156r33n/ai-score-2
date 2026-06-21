@@ -2,6 +2,8 @@
 
 Living document built via Q&A. Supersedes ambiguous parts of `instructions.md` where noted.
 
+**New agent?** Read `spec/q-and-a-progress.md` for Q&A state and the next question to ask.
+
 ## Objective
 
 Score and explain **AI optimisation opportunity per URL** using observable signals. See `instructions.md` for component definitions and non-goals.
@@ -103,7 +105,7 @@ python3 scripts/export_urls_keywords.py \
 
 ## Open (not yet decided)
 
-- Minimum peer count (e.g. score eligibility when 0 peers after exclusion?)
+- Default thresholds for `too_few_peers` and `corpus_too_thin`
 - Fact schema, coverage math, opportunity formula wiring
 - AI attention and credibility data sources for V1
 - Deliverable shape (CLI, outputs on disk)
