@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import sys
+import urllib.error
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -16,13 +17,21 @@ def main() -> None:
         print(
             "FAIL: credentials not in environment. "
             "Add Cloud Agent Runtime Secrets named exactly "
-            "DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD, then start a new agent run.",
+            "DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD (or dataforseo_user / "
+            "dataforseo_pass), then start a new agent run.",
             file=sys.stderr,
         )
         sys.exit(1)
 
     try:
         data = get("/v3/appendix/user_data")
+    except urllib.error.URLError as e:
+        print(
+            "FAIL: cannot reach api.dataforseo.com (TLS/network). "
+            f"Credentials are present but the API is unreachable from this host: {e.reason}",
+            file=sys.stderr,
+        )
+        sys.exit(4)
     except RuntimeError as e:
         print(f"FAIL: API error — {e}", file=sys.stderr)
         sys.exit(2)
