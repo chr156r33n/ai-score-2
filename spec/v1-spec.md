@@ -21,17 +21,30 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | 7 | Sparse / failed peer set | **Always emit an eligibility score** when the pipeline runs, including 0 peers or failed crawls. Pair the score with explicit **quality caveats** (see below) so consumers know when to trust it. |
 | 8 | Interpretability | **Separate module**, spec **on hold** — Screaming Frog / rules deferred. Pipeline must not depend on it for other modules to run. See [Architecture](#architecture-modules). |
 | 9 | Fact inventory | **Corpus-defined** — The facts eligibility uses are **those in the benchmark corpus** (aggregated from SERP peers). No separate global taxonomy or external question list defines the fact set in V1. The target is scored on **coverage of corpus facts** only. |
+| 10 | Fact representation | **Structured claim** — Each fact is a typed record (not a free-floating sentence). Extracted from peer pages when building the corpus; target matched against the same shape. |
 
 ### Eligibility flow (per target URL)
 
 1. Read `primary_keyword`, `region`, `language`, and `device` for the target URL from input file (defaults: `US`, `en`, `mobile`).
 2. Fetch top 10 organic results from DataForSEO for that keyword and locale.
 3. **Remove the target URL** from that list if present. **Do not backfill** with additional SERP positions. Use the remaining URLs as peers (0–10).
-4. Extract facts from peer URLs → **benchmark corpus** (union across peers).
+4. Extract facts from peer URLs → **benchmark corpus** (union across peers, deduplicated).
 5. Extract facts from **target URL**.
-6. Coverage analysis → eligibility score / gaps (details TBD).
+6. **Coverage analysis** — For each fact in the **benchmark corpus**, determine whether the target supports it (directly or by normalized match). Eligibility reflects **corpus coverage**, not a fixed off-site checklist.
 
-**Note:** Corpus is built from SERP peers only (never the target).
+**Note:** Corpus is built from SERP peers only (never the target). **The corpus is the fact list** — there is no parallel “master fact schema” in V1.
+
+### Eligibility facts (corpus-defined)
+
+| Stage | What happens |
+|-------|----------------|
+| **Corpus build** | Extract candidate facts from each peer page → merge → **dedup** → ordered list `benchmark_facts[]`. |
+| **Target assess** | Extract candidate facts from target → match against `benchmark_facts[]`. |
+| **Score** | Function of **present / missing / weighted missing** corpus facts (formula TBD). |
+
+- Facts **not** in the corpus (target-only content) do not increase eligibility in V1 (may appear in narrative “extras” later — TBD).
+- **Representation** of each fact in JSON (string vs typed record) is TBD — must support dedup and “same fact on target” matching.
+
 
 ### Eligibility scoring when data is weak
 
@@ -129,7 +142,8 @@ python3 scripts/export_urls_keywords.py \
 
 - Opportunity behavior when interpretability (or other modules) are skipped / on hold
 - Default thresholds for `too_few_peers` and `corpus_too_thin`
-- Fact schema, coverage math
+- Fact **representation** (string vs typed) and matching/dedup rules
+- Coverage → `eligibility_score` formula (including LLM importance on missing corpus facts)
 - Content fetch for eligibility (Q8 — blocked on network spike)
 - AI attention and credibility data sources for V1
 - Deliverable shape (CLI, outputs on disk)
