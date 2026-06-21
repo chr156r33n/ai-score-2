@@ -19,10 +19,13 @@
 | 5 | SERP locale columns: **`region`**, **`language`**, **`device`**; defaults US / en / mobile; region inferred from URL slug (`scripts/property_regions.py`). |
 | 6 | If target in top 10: **exclude, no backfill** (0–9 peers). |
 | 7 | **Always score eligibility**; use **`eligibility_caveats`** (`no_peers`, `too_few_peers`, `corpus_too_thin`, `peer_not_accessible`, `target_not_accessible`, `serp_incomplete`). |
+| 8 | **Interpretability = separate module, on hold** — defer SF/export/rules; pipeline runs without it. |
 
 ---
 
-## In progress (question 8)
+## Blocked / in progress
+
+### Question 8 — content fetch (network)
 
 **Topic:** How to fetch peer + target HTML/content for fact extraction.
 
@@ -48,15 +51,14 @@ python3 scripts/spike_dataforseo_on_page.py \
 
 ## Next questions (suggested order)
 
-Ask **one at a time** after Q8 is locked:
+Ask **one at a time** (interpretability Q&A **paused — module on hold**):
 
-1. **Interpretability** — Which Screaming Frog export(s) / columns are canonical for V1?
-2. **Fact schema** — What is a “fact” for benchmark vs page (string, typed, FAQ pair)?
-3. **Coverage → eligibility_score** — Overlap % vs LLM-weighted missing facts (per `instructions.md`).
+1. **Fact schema** — What is a “fact” for benchmark vs page (string, typed, FAQ pair)?
+2. **Coverage → eligibility_score** — Overlap % vs LLM-weighted missing facts (per `instructions.md`).
+3. **Opportunity formula** — Normalize gaps before × attention; behavior when interpretability/others skipped.
 4. **AI attention** — Minimum viable signal for V1 (logs upload, placeholder, defer)?
 5. **Credibility** — DataForSEO backlinks vs defer / domain-level stub?
-6. **Opportunity formula** — Normalize gaps before × attention; expose scores vs gaps in output JSON.
-7. **Deliverable** — CLI batch → JSON/CSV on disk for ~1.4k URLs?
+6. **Deliverable** — CLI batch → JSON/CSV on disk for ~1.4k URLs?
 
 ---
 

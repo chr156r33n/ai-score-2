@@ -19,6 +19,7 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | 5 | SERP locale | **`region`** (ISO 3166-1 alpha-2), **`language`** (BCP-47), **`device`** per row. Run defaults: missing values → `US`, `en`, `mobile`. CMM export infers **region from URL property slug**; **language `en`**; **device `mobile`** for all rows. |
 | 6 | Target in SERP top 10 | **Exclude target, no backfill** — If the target URL appears in the top 10 organic results, remove it from the peer set. Do **not** fetch position 11+ to refill. The benchmark corpus may contain **fewer than 10** URLs. |
 | 7 | Sparse / failed peer set | **Always emit an eligibility score** when the pipeline runs, including 0 peers or failed crawls. Pair the score with explicit **quality caveats** (see below) so consumers know when to trust it. |
+| 8 | Interpretability | **Separate module**, spec **on hold** — Screaming Frog / rules deferred. Pipeline must not depend on it for other modules to run. See [Architecture](#architecture-modules). |
 
 ### Eligibility flow (per target URL)
 
@@ -72,6 +73,26 @@ Every eligibility result includes counts plus a machine-readable caveat list.
 
 Caveats are **non-blocking**: they explain reliability; they do not suppress the score.
 
+## Architecture (modules)
+
+V1 is composed of **independent modules** orchestrated by a thin runner (no agent orchestration). Each module owns its inputs, scoring, and explainability payload.
+
+| Module | Status | Role |
+|--------|--------|------|
+| **eligibility** | Spec in progress | SERP peers → corpus → coverage / gaps |
+| **interpretability** | **On hold** | Technical page quality (planned: Screaming Frog). **No Q&A or implementation detail pinned yet.** |
+| **attention** | Open | AI-related demand signals |
+| **credibility** | Open | Observable trust / authority signals |
+| **opportunity** | Open | Combines module outputs (formula TBD) |
+
+### Interpretability module (hold)
+
+- **Boundary:** Own package/module (e.g. `interpretability/`). Accepts crawl-derived inputs (format **TBD**). Returns `interpretability_score` (0–100) and `issues[]` per URL.
+- **Hold:** Export format, check catalog, and SF workflow are **explicitly deferred**. Other modules must not assume interpretability has run.
+- **Pipeline contract while on hold:**
+  - Runner may **skip** the interpretability step.
+  - Per-URL output includes `interpretability: null` (or omitted) and `modules.interpretability.status: "hold"` | `"skipped"` | `"ok"` when implemented later.
+  - **Opportunity** when interpretability is skipped: **TBD** (e.g. renormalize gap weights across remaining components, or omit composite until module is live).
 
 ## Run input: URL / keywords
 
@@ -105,8 +126,10 @@ python3 scripts/export_urls_keywords.py \
 
 ## Open (not yet decided)
 
+- Opportunity behavior when interpretability (or other modules) are skipped / on hold
 - Default thresholds for `too_few_peers` and `corpus_too_thin`
-- Fact schema, coverage math, opportunity formula wiring
+- Fact schema, coverage math
+- Content fetch for eligibility (Q8 — blocked on network spike)
 - AI attention and credibility data sources for V1
 - Deliverable shape (CLI, outputs on disk)
 
