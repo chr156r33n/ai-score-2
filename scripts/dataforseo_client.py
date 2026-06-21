@@ -11,11 +11,13 @@ import urllib.request
 API_BASE = "https://api.dataforseo.com"
 
 _LOGIN_KEYS = (
+    "dataforseo_user",
     "DATAFORSEO_LOGIN",
     "DATAFORSEO_USERNAME",
     "DATAFORSEO_API_LOGIN",
 )
 _PASSWORD_KEYS = (
+    "dataforseo_pass",
     "DATAFORSEO_PASSWORD",
     "DATAFORSEO_API_PASSWORD",
 )
@@ -45,7 +47,8 @@ def auth_header() -> str:
     if not login or not password:
         raise RuntimeError(
             "DataForSEO credentials missing. Set Cloud Agent secrets "
-            "DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD (Runtime Secret)."
+            "dataforseo_user and dataforseo_pass (or DATAFORSEO_LOGIN / "
+            "DATAFORSEO_PASSWORD)."
         )
     token = base64.b64encode(f"{login}:{password}".encode()).decode()
     return f"Basic {token}"

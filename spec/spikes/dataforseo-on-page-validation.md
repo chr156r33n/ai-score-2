@@ -52,14 +52,14 @@ Record keyword, region, language, device for each SERP call.
 
 ## How to run the automated spike
 
-**Cloud Agent secrets** (Runtime Secret, scoped to this repo environment):
+**Cloud Agent secrets** (environment variables, scoped to this repo environment):
 
 | Name | Value |
 |------|--------|
-| `DATAFORSEO_LOGIN` | API login |
-| `DATAFORSEO_PASSWORD` | API password |
+| `dataforseo_user` | API login |
+| `dataforseo_pass` | API password |
 
-Names must match exactly. After adding secrets, **start a new Cloud Agent run** so they are injected (they may not appear in `printenv`).
+Legacy names `DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD` also work in code.
 
 ```bash
 python3 scripts/check_dataforseo_credentials.py

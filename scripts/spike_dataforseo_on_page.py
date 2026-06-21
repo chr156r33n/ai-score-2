@@ -2,7 +2,7 @@
 """
 Spike: DataForSEO SERP + On-Page Instant Pages for one target keyword.
 
-Requires Cloud Agent secrets: DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
+Requires Cloud Agent env: dataforseo_user, dataforseo_pass
 """
 
 from __future__ import annotations

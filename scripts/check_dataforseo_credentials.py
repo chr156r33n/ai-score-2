@@ -15,8 +15,8 @@ def main() -> None:
     if not credentials_configured():
         print(
             "FAIL: credentials not in environment. "
-            "Add Cloud Agent Runtime Secrets named exactly "
-            "DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD, then start a new agent run.",
+            "Add Cloud Agent secrets named "
+            "dataforseo_user and dataforseo_pass, then start a new agent run.",
             file=sys.stderr,
         )
         sys.exit(1)
