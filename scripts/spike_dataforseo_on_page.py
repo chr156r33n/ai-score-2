@@ -2,57 +2,21 @@
 """
 Spike: DataForSEO SERP + On-Page Instant Pages for one target keyword.
 
-Requires env: DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
+Requires Cloud Agent secrets: DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
 """
 
 from __future__ import annotations
 
 import argparse
-import base64
 import json
-import os
 import sys
-import urllib.error
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
-API_BASE = "https://api.dataforseo.com"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-
-def _auth_header() -> str:
-    login = os.environ.get("DATAFORSEO_LOGIN", "").strip()
-    password = os.environ.get("DATAFORSEO_PASSWORD", "").strip()
-    if not login or not password:
-        print(
-            "Set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD to run this spike.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    token = base64.b64encode(f"{login}:{password}".encode()).decode()
-    return f"Basic {token}"
-
-
-def _post(path: str, payload: list | dict) -> dict:
-    url = f"{API_BASE}{path}"
-    body = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=body,
-        method="POST",
-        headers={
-            "Authorization": _auth_header(),
-            "Content-Type": "application/json",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode() if e.fp else ""
-        print(f"HTTP {e.code} {path}: {err_body[:2000]}", file=sys.stderr)
-        raise
+from dataforseo_client import post  # noqa: E402
 
 
 def _normalize_url(url: str) -> str:
@@ -116,7 +80,7 @@ def run_serp(
             "depth": 10,
         }
     ]
-    raw = _post("/v3/serp/google/organic/live/advanced", payload)
+    raw = post("/v3/serp/google/organic/live/advanced", payload)
     urls: list[str] = []
     tasks = raw.get("tasks") or []
     for task in tasks:
@@ -135,7 +99,7 @@ def run_instant_pages(url: str, enable_js: bool) -> dict:
             "enable_browser_rendering": enable_js,
         }
     ]
-    return _post("/v3/on_page/instant_pages", payload)
+    return post("/v3/on_page/instant_pages", payload)
 
 
 def main() -> None:

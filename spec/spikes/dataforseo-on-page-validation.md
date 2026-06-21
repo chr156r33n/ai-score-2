@@ -52,9 +52,17 @@ Record keyword, region, language, device for each SERP call.
 
 ## How to run the automated spike
 
+**Cloud Agent secrets** (Runtime Secret, scoped to this repo environment):
+
+| Name | Value |
+|------|--------|
+| `DATAFORSEO_LOGIN` | API login |
+| `DATAFORSEO_PASSWORD` | API password |
+
+Names must match exactly. After adding secrets, **start a new Cloud Agent run** so they are injected (they may not appear in `printenv`).
+
 ```bash
-export DATAFORSEO_LOGIN="your_login"
-export DATAFORSEO_PASSWORD="your_password"
+python3 scripts/check_dataforseo_credentials.py
 
 python3 scripts/spike_dataforseo_on_page.py \
   --keyword "four seasons abu dhabi" \
