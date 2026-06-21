@@ -22,6 +22,7 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | 8 | Interpretability | **Separate module**, spec **on hold** — Screaming Frog / rules deferred. Pipeline must not depend on it for other modules to run. See [Architecture](#architecture-modules). |
 | 9 | Fact inventory | **Corpus-defined** — The facts eligibility uses are **those in the benchmark corpus** (aggregated from SERP peers). No separate global taxonomy or external question list defines the fact set in V1. The target is scored on **coverage of corpus facts** only. |
 | 10 | Fact representation | **Structured claim** — Each fact is a typed record (not a free-floating sentence). Extracted from peer pages when building the corpus; target matched against the same shape. |
+| 11 | Eligibility scoring | **Deterministic coverage only** — No LLM in the batch eligibility step. `eligibility_score` = face-value **corpus coverage %** (0–100). Export **`matching_topics`** (and related fields) for load into SQLite / **query-time agent** analysis (importance, narratives, etc.). |
 
 ### Eligibility flow (per target URL)
 
@@ -43,7 +44,32 @@ Score and explain **AI optimisation opportunity per URL** using observable signa
 | **Score** | Function of **present / missing / weighted missing** corpus facts (formula TBD). |
 
 - Facts **not** in the corpus (target-only content) do not increase eligibility in V1 (may appear in narrative “extras” later — TBD).
-- **Representation** of each fact in JSON (string vs typed record) is TBD — must support dedup and “same fact on target” matching.
+
+**V1 fact record (structured claim):**
+
+```json
+{
+  "id": "uuid-or-stable-hash",
+  "topic": "dining",
+  "subject": "Four Seasons Abu Dhabi",
+  "predicate": "offers",
+  "object": "fine dining restaurant on-site",
+  "statement": "Fine dining restaurant on-site",
+  "source_peer_urls": ["https://competitor.example/dining"]
+}
+```
+
+| Field | Required | Notes |
+|-------|----------|--------|
+| `topic` | Yes | Coarse grouping for reporting (e.g. `location`, `rooms`, `dining`, `spa`, `policies`, `events`, `offers`). **Not** a fixed enum in V1 — values emerge from extraction. |
+| `subject` | Yes | Entity the claim is about (often property or page subject). |
+| `predicate` | Yes | Relationship / attribute type (e.g. `offers`, `has`, `located_in`, `requires`, `hours`). |
+| `object` | Yes | Object or value of the claim. |
+| `statement` | Yes | Single normalized human-readable line for UI and LLM weighting (derived from S/P/O or extracted directly). |
+| `source_peer_urls` | Yes (corpus) | Which peer URL(s) contributed this fact; empty on target-side extractions until matched. |
+| `id` | Yes (corpus) | Stable id after corpus dedup (hash of normalized S/P/O or assigned in merge step). |
+
+**Corpus dedup:** Merge peer extractions that refer to the same claim (deterministic normalization first; LLM **dedup/classification only** per `instructions.md`). **Target match:** Target fact satisfies a corpus fact when normalized S/P/O (or `statement`) meets match rules (TBD: exact vs fuzzy).
 
 
 ### Eligibility scoring when data is weak
@@ -142,7 +168,7 @@ python3 scripts/export_urls_keywords.py \
 
 - Opportunity behavior when interpretability (or other modules) are skipped / on hold
 - Default thresholds for `too_few_peers` and `corpus_too_thin`
-- Fact **representation** (string vs typed) and matching/dedup rules
+- Fact **matching** rules (exact S/P/O vs fuzzy `statement`)
 - Coverage → `eligibility_score` formula (including LLM importance on missing corpus facts)
 - Content fetch for eligibility (Q8 — blocked on network spike)
 - AI attention and credibility data sources for V1

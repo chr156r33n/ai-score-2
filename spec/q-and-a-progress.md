@@ -22,6 +22,7 @@
 | 8 | **Interpretability = separate module, on hold** — defer SF/export/rules; pipeline runs without it. |
 | 9 | **Facts = benchmark corpus only** — peer-derived fact list; target scored on coverage of that list, not an external taxonomy. |
 | 10 | **Structured claim** — `topic`, `subject`, `predicate`, `object`, `statement`, `source_peer_urls`, stable `id`. |
+| 11 | **Deterministic eligibility** — `eligibility_score` = coverage %; export `matching_topics`, `corpus_topics`, `missing_topics`, `missing_facts` for SQLite + query-time agent. |
 
 ---
 
@@ -55,8 +56,8 @@ python3 scripts/spike_dataforseo_on_page.py \
 
 Ask **one at a time** (interpretability Q&A **paused — module on hold**):
 
-1. **Fact representation** — Minimal JSON shape for corpus facts so dedup + target matching work (still **corpus-sourced**, not a global taxonomy).
-2. **Coverage → eligibility_score** — Overlap % vs LLM-weighted missing **corpus** facts (per `instructions.md`).
+1. **Coverage → eligibility_score** — Overlap % vs LLM-weighted missing **corpus** facts (per `instructions.md`).
+2. **Fact matching** — Exact structured claim vs fuzzy `statement` for target coverage.
 3. **Opportunity formula** — Normalize gaps before × attention; behavior when interpretability/others skipped.
 4. **AI attention** — Minimum viable signal for V1 (logs upload, placeholder, defer)?
 5. **Credibility** — DataForSEO backlinks vs defer / domain-level stub?
